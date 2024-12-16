@@ -6,6 +6,7 @@ import requests
 from pathlib import Path
 import json
 import sys
+import os
 
 class API:
     def __init__(self, username, password):
@@ -13,7 +14,7 @@ class API:
         self.password = password
         self.session = requests.Session()
         self.session.auth = (username, password)
-        self.base_url = "https://mastering-sqlalchemy.apps.pipal.in"
+        self.base_url = os.getenv("MASTERING_SQLALCHEMY_BASE_URL", "https://mastering-sqlalchemy.apps.pipal.in")
 
     def get(self, path):
         url = self.base_url + path

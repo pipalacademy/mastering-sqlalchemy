@@ -19,6 +19,10 @@ class API:
         url = self.base_url + path
         return self.session.get(url)
 
+    def post(self, path, data, **kwargs):
+        url = self.base_url + path
+        return self.session.post(url, data=data, **kwargs)
+
     def whoami(self):
         r = self.get("/whoami")
         if r.status_code == 403:
@@ -27,6 +31,17 @@ class API:
         r.raise_for_status()
         d = r.json()
         print(f"Hello, {d['name']}!")
+
+    def submit(self, filename):
+        path = Path(filename)
+        assignment = path.stem
+
+        url = "/assignments/" + assignment
+        payload = path.read_text()
+        r = self.post(url, payload)
+
+        r.raise_for_status()
+        print(f"Assignment {assignment} is submitted successfully!")
 
     @staticmethod
     def load():
@@ -58,10 +73,12 @@ def update():
     print("Not yet implemented!")
 
 @app.command()
-def submit():
+@click.argument('filename')
+def submit(filename):
     """Submits an assignment
     """
-    print("Not yet implemented!")
+    api = API.load()
+    api.submit(filename)
 
 @app.command()
 def whoami():

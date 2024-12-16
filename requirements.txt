@@ -1,0 +1,9 @@
+jupysql
+SQLAlchemy<2.0
+pymssql
+pyodbc
+pandas
+PyYAML
+pytest
+ipykernel
+click

@@ -61,11 +61,26 @@ class API:
         d = {"username": self.username, "password": self.password}
         path.write_text(json.dumps(d))
 
-    def update(self):
+    def update(self, force=False):
         updates = self.get("/updates").json()['updates']
+        current_version = self.read_version() if not force else 0
         for entry in updates:
-            print("updating to version", entry['version'])
-            self.update_files(entry['files'])
+            version = entry['version']
+            if version > current_version:
+                print("updating to version", entry['version'])
+                self.update_files(entry['files'])
+        self.update_version(version)
+
+    def read_version(self):
+        try:
+            return int(open(".pipal/version.txt").read())
+        except IOError:
+            return 0
+
+    def update_version(self, version):
+        path = Path(".pipal/version.txt")
+        path.parent.mkdir(exist_ok=True)
+        path.write_text(str(version))
 
     def update_files(self, files):
         for f in files:
@@ -81,16 +96,21 @@ class API:
             path.write_text(text)
             print("saved", path)
 
+    def fetch(self, path):
+        url = f"https://raw.githubusercontent.com/pipalacademy/mastering-sqlalchemy/refs/heads/main/{path}"
+        return requests.get(url).text
+
 @click.group()
 def app():
     pass
 
 @app.command()
-def update():
+@click.option('--force', is_flag=True, help="force update all versions")
+def update(force):
     """Fetch new updates to the repository.
     """
     api = API.load()
-    api.update()
+    api.update(force=force)
 
 @app.command()
 @click.argument('filename')

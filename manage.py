@@ -96,14 +96,14 @@ class API:
         if path.exists() and path.suffix == ".ipynb":
             print("already exists:", path)
         else:
-            text = self.fetch(f)
+            data = self.fetch(f)
             path.parent.mkdir(exist_ok=True, parents=True)
-            path.write_text(text)
+            path.write_bytes(data)
             print("saved", path)
 
     def fetch(self, path):
         url = f"https://raw.githubusercontent.com/pipalacademy/mastering-sqlalchemy/refs/heads/main/{path}"
-        return requests.get(url).text
+        return requests.get(url).content
 
 @click.group()
 def app():

@@ -61,6 +61,25 @@ class API:
         d = {"username": self.username, "password": self.password}
         path.write_text(json.dumps(d))
 
+    def update(self):
+        updates = self.get("/updates").json()['updates']
+        for entry in updates:
+            print("updating to version", entry['version'])
+            self.update_files(entry['files'])
+
+    def update_files(self, files):
+        for f in files:
+            self.update_file(f)
+
+    def update_file(self, f):
+        path = Path(f)
+        if path.exists() and path.suffix == ".ipynb":
+            print("already exists:", path)
+        else:
+            text = self.fetch(f)
+            path.parent.mkdir(exist_ok=True, parents=True)
+            path.write_text(text)
+            print("saved", path)
 
 @click.group()
 def app():
@@ -70,7 +89,8 @@ def app():
 def update():
     """Fetch new updates to the repository.
     """
-    print("Not yet implemented!")
+    api = API.load()
+    api.update()
 
 @app.command()
 @click.argument('filename')

@@ -36,12 +36,16 @@ class API:
         path = Path(filename)
         assignment = path.stem
 
-        url = "/assignments/" + assignment
+        if path.suffix not in (".ipynb", ".py"):
+            print("You can only submit .ipynb or .py files", file=sys.stderr)
+            sys.exit(2)
+
+        url = "/submit/" + filename
         payload = path.read_text()
         r = self.post(url, payload)
 
         r.raise_for_status()
-        print(f"Assignment {assignment} is submitted successfully!")
+        print(f"The file {filename} has been submitted successfully!")
 
     @staticmethod
     def load():

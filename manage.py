@@ -105,6 +105,12 @@ class API:
         url = f"https://raw.githubusercontent.com/pipalacademy/mastering-sqlalchemy/refs/heads/main/{path}"
         return requests.get(url).content
 
+    def get_problem(self, name):
+        r = self.get(f"/problems/{name}")
+        if r.status_code == 404:
+            raise Exception(f"Unknown problem: {name}")
+        return r.json()
+
 @click.group()
 def app():
     pass

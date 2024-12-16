@@ -12,6 +12,7 @@ from manage import API
 import sys
 import traceback
 from pathlib import Path
+import subprocess
 
 api = API.load()
 
@@ -127,6 +128,95 @@ class FunctionCheck(Check):
             self.logger.log(f"  expected: {self.expected!r}")
             self.logger.log(f"  found: {result!r}")
             return False
+
+class CommandCheck(Check):
+    def __init__(self, spec, logger=None, problem=None):
+        super().__init__(self, logger=logger, problem=problem)
+
+        self.command = spec["command"]
+        self.name = spec.get("name") or self.command
+        self.sort_output = spec.get("sort_output", False)
+        self.expected_output_print = ""
+        self.expected_output = self.process_expected_output(spec.get("expected_output"), self.sort_output)
+        self.expected_output_print = self.expected_output
+        if self.sort_output:
+            self.expected_output = self.sort_output_lines(self.expected_output)
+
+        self.test = spec.get("test")
+
+    def process_expected_output(self, expected_output, sort_output):
+        if expected_output is None:
+            return None
+        if isinstance(expected_output, dict):
+            cmd = expected_output["command"]
+
+            cmd = cmd.format(PROBLEM_ROOT=self.problem.root)
+
+            p = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, text=True, check=False)
+            return self.ignore_trailing_space(p.stdout.strip("\n"))
+        else:
+            return expected_output.strip("\n")
+
+    def sort_output_lines(self, output):
+        lines = output.splitlines()
+        return "\n".join(sorted(lines))
+
+    def ignore_trailing_space(self, text):
+        lines = [line.rstrip() for line in text.splitlines()]
+        return "\n".join(lines)
+
+    def run(self, env):
+        env = env.copy()
+        # print(f"$ {self.command}")
+        p = subprocess.run(
+            self.command, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False
+        )
+        output = p.stdout.strip("\n")
+        output = self.ignore_trailing_space(output)
+        output_print = output
+
+        if self.sort_output:
+            output = self.sort_output_lines(output)
+
+        if self.expected_output is not None:
+
+            # XXX-Anand: Work-around to deal with YAML when there are leading spaces in the first line
+            # The trick is to replace the first space with an _ and the following code replaces that back to a space.
+            if self.expected_output.startswith("_"):
+                self.expected_output = self.expected_output.replace("_", " ", 1)
+
+            if output == self.expected_output:
+                self.logger.log(f"✓ {self.name}")
+                return True
+            else:
+                self.logger.log(f"✗ {self.name}")
+                self.logger.log(f"Expected:\n{self.expected_output_print}")
+                self.logger.log(f"Found:\n{output_print}")
+                return False
+        elif self.test:
+            self.stdout = output
+            return self.run_test()
+        else:
+            return True
+
+    def run_test(self):
+        try:
+            env = {"stdout": self.stdout}
+            # p = self.problem and self.problem.joinpath("_checks.py")
+            # if p.exists():
+            #     exec(p.read_text(), env)
+
+            exec(self.test, env)
+        except Exception:
+            self.logger.log(f"✗ {self.name}")
+            sys.stdout.flush()
+            traceback.print_exc()
+            sys.stderr.flush()
+            return False
+        else:
+            self.logger.log(f"✓ {self.name}")
+            return True
+
 
 class _Logger:
     """Simple logger to capture the logged output."""

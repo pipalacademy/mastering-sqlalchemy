@@ -6,5 +6,5 @@ pandas
 PyYAML
 pytest
 ipykernel
-clickq
+click
 markdown

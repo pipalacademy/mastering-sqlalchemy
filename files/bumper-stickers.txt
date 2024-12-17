@@ -1,0 +1,10 @@
+Pi seconds is a nanocentury.
+The sooner you start to code, the longer the program will take.
+Testing can show the presence of bugs, but not their absence.
+The first step in fixing a broken program is getting it to fail repeatably.
+Electricity travels a foot in a nanosecond.
+Whenever possible, steal code.
+Don’t use the computer to do things that can be done efficiently by hand.
+Don’t use hands to do things that can be done efficiently by the computer.
+Eschew clever rules.
+The first 90 percent of the code accounts for the first 90 percent of the development time. The remaining 10 percent of the code accounts for the other 90 percent of the development time.

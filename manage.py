@@ -42,7 +42,7 @@ class API:
             sys.exit(2)
 
         url = "/submit/" + filename
-        payload = path.read_text()
+        payload = path.read_bytes()
         r = self.post(url, payload)
 
         r.raise_for_status()

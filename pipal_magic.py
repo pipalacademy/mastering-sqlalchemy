@@ -13,6 +13,7 @@ import sys
 import traceback
 from pathlib import Path
 import subprocess
+import markdown
 
 api = API.load()
 
@@ -22,6 +23,9 @@ class Problem:
         self.metadata = api.get_problem(name)
         self.logger = _Logger()
         self.checks = [Check.load(c, logger=self.logger) for c in self.metadata['checks']]
+
+        self.title = self.metadata['title']
+        self.problem_type = self.metadata['problem_type']
 
     def verify(self, env):
         self._verify(env)
@@ -55,6 +59,31 @@ class Problem:
         else:
             self.logger.log(f"💥 Oops! Your solution to problem {self.name} is incorrect or incomplete.")
             return "fail"
+
+    def get_description_html(self):
+        desc = self.metadata['description']
+        return self.markdown(desc)
+
+    def markdown(self, text):
+        return markdown.markdown(text, extensions=["fenced_code"])
+
+    def get_initial_code(self):
+        return ""
+
+    def _repr_html_(self):
+        return f"""
+        <strong>Problem: {self.title}</strong>
+
+        <p>{self.get_description_html()}
+        </p>
+
+        <p>You can verify your solution using:
+        <pre>%verify_problem {self.name.replace("-", "_")}</pre>
+        </p>
+        """
+
+    def __repr__(self):
+        return f"<Probem: {self.name}>"
 
 
 class Check:
@@ -238,6 +267,31 @@ class PipalMagics(Magics):
         p = Problem(name)
         p.verify(local_ns)
 
+    @line_magic
+    def load_problem(self, line):
+        name = line.replace("_", "-")
+        problem = Problem(name)
+        display(problem)
+
+        if problem.problem_type == "script":
+            create_new_cell(f"%%file {problem.script_name}\n# your code here\n\n\n\n")
+        else:
+            code = problem.get_initial_code() or "# your code here\n\n\n\n"
+            self.create_new_cell(code)
+
+    def create_new_cell(self, contents):
+        from IPython.core.getipython import get_ipython
+
+        shell = get_ipython()
+
+        payload = dict(
+            source="set_next_input",
+            text=contents,
+            replace=False,
+        )
+        shell.payload_manager.write_payload(payload, single=False)
+
+
 ipython = get_ipython()
 ipython.register_magics(PipalMagics)
-print("Loaded magic commands: verify_problem")
+print("Loaded magic commands: load_problem and verify_problem")

@@ -234,7 +234,8 @@ class PipalMagics(Magics):
     @line_magic
     @needs_local_scope
     def verify_problem(self, line, local_ns=None):
-        p = Problem(line)
+        name = line.replace("_", "-")
+        p = Problem(name)
         p.verify(local_ns)
 
 ipython = get_ipython()

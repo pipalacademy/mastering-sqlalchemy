@@ -179,7 +179,7 @@ class CommandCheck(Check):
         if isinstance(expected_output, dict):
             cmd = expected_output["command"]
 
-            cmd = cmd.format(PROBLEM_ROOT=self.problem.root)
+            # cmd = cmd.format(PROBLEM_ROOT=self.problem.root)
 
             p = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, text=True, check=False)
             return self.ignore_trailing_space(p.stdout.strip("\n"))

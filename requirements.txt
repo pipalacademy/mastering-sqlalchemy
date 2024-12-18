@@ -7,3 +7,5 @@ pytest
 ipykernel
 click
 markdown
+tabulate
+Pillow
